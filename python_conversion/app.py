@@ -7,8 +7,7 @@ from login_backend_python.extensions import db
 from login_backend_python.models import find_user_by_username
 from python_conversion.token_filter import token_required, generate_token, refresh_token
 from python_conversion.src.test_responder_data import test_bp
-from python_conversion.models import get_dashboard_index_stats, get_dashboard_newdemos_states, get_dashboard_responder_file_data
-
+from python_conversion.models import get_dashboard_index_stats, get_dashboard_newdemos_states, get_dashboard_responder_file_data, FeedManagerReport
 
 app = Flask(__name__)
 
@@ -74,11 +73,6 @@ def home():
 def login_get():
     return jsonify({"message": "Please use POST method to login with username and password"}), 200
 
-
-app.register_blueprint(test_bp)
-
-# Dashboard routes
-
 @app.route('/api/dashboard/index', methods=['GET'])
 @token_required(app)
 def dashboard_index(current_user):
@@ -117,11 +111,21 @@ def dashboard_newdemos(current_user):
     states = get_dashboard_newdemos_states(db)
     return jsonify(states)
 
-@app.route('/api/dashboard/responderFile', methods=['GET'])
+@app.route('/api/reports/responderFile', methods=['GET'])
 @token_required(app)
 def dashboard_responderFile(current_user):
     data = get_dashboard_responder_file_data(db)
     return jsonify(data)
+
+@app.route('/api/reports/feedmanagerreport', methods=['GET'])
+@token_required(app)
+def feed_manager_report(current_user):
+    report = FeedManagerReport.factory()
+    results = report.execute(db.session)
+    data = [dict(row) for row in results]
+    return jsonify(data)
+
+app.register_blueprint(test_bp)
 
 if __name__ == '__main__':
     app.run(debug=True)
